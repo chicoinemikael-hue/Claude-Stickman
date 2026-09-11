@@ -33,6 +33,12 @@ class Character:
     pose: object = field(default_factory=lambda: STAND)
     expression: str = "neutral"
 
+    # Costume worn on the torso ("toga", "cape", or None) and props
+    # held/worn (e.g. ["roman_helmet", "sword", "round_shield"]).
+    costume: str = None
+    costume_color: tuple = None
+    props: list = field(default_factory=list)
+
     # --- resolved screen-space values, set by resolve() before drawing ---
     x_px: float = 0.0
     y_px: float = 0.0

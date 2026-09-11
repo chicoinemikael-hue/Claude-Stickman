@@ -180,30 +180,41 @@ BONES = [
     ("hip", "hip_r"), ("hip_r", "knee_r"), ("knee_r", "foot_r"), ("foot_r", "toe_r"),
 ]
 
-# Draw order (back-to-front) so limbs on the far side of the body are
-# laid down before the torso and near-side limbs cover their joints.
-BONE_DRAW_ORDER = [
-    ("hip", "hip_l"), ("hip_l", "knee_l"), ("knee_l", "foot_l"), ("foot_l", "toe_l"),
-    ("neck", "sh_l"), ("sh_l", "el_l"), ("el_l", "hand_l"),
-    ("hip", "neck"),
-    ("hip", "hip_r"), ("hip_r", "knee_r"), ("knee_r", "foot_r"), ("foot_r", "toe_r"),
-    ("neck", "sh_r"), ("sh_r", "el_r"), ("el_r", "hand_r"),
-]
+# Draw order split into layers (back-to-front) so a cape can be drawn
+# behind everything, and a toga drawn over the torso but under the
+# arms that emerge from it.
+BACK_LEG_BONES = [("hip", "hip_l"), ("hip_l", "knee_l"), ("knee_l", "foot_l"), ("foot_l", "toe_l")]
+BACK_ARM_BONES = [("neck", "sh_l"), ("sh_l", "el_l"), ("el_l", "hand_l")]
+TORSO_BONES = [("hip", "neck")]
+FRONT_LEG_BONES = [("hip", "hip_r"), ("hip_r", "knee_r"), ("knee_r", "foot_r"), ("foot_r", "toe_r")]
+FRONT_ARM_BONES = [("neck", "sh_r"), ("sh_r", "el_r"), ("el_r", "hand_r")]
+
+
+def _stroke_bones(ctx, screen_points, bone_list, color, limb_width):
+    ctx.set_source_rgb(*color)
+    ctx.set_line_width(limb_width)
+    for a, b in bone_list:
+        ctx.move_to(*screen_points[a])
+        ctx.line_to(*screen_points[b])
+        ctx.stroke()
 
 
 def draw_stickman(ctx, character, pose: Pose):
-    """Draw one stickman onto a cairo context.
+    """Draw one stickman (plus costume/props, if any) onto a cairo
+    context.
 
     `character` needs: x_px, y_px (ground position), height_px,
-    facing ("left"/"right"), color (r, g, b 0..1), and expression.
+    facing ("left"/"right"), color (r, g, b 0..1), expression, and
+    optionally costume/costume_color/props (see engine.character).
     """
     import engine.expressions as expressions
+    import engine.costumes as costumes
+    import engine.props as props
 
     H = character.height_px
-    points = layout_points(pose, H, character.facing)
-
-    def to_screen(p):
-        return (character.x_px + p[0], character.y_px + p[1])
+    local_points = layout_points(pose, H, character.facing)
+    screen_points = {k: (character.x_px + x, character.y_px + y) for k, (x, y) in local_points.items()}
+    side = 1 if character.facing == "right" else -1
 
     limb_width = LIMB_WIDTH_RATIO * H
     joint_radius = JOINT_RADIUS_RATIO * H
@@ -211,26 +222,32 @@ def draw_stickman(ctx, character, pose: Pose):
     ctx.set_line_cap(1)   # ROUND
     ctx.set_line_join(1)  # ROUND
 
-    for a, b in BONE_DRAW_ORDER:
-        pa, pb = to_screen(points[a]), to_screen(points[b])
-        ctx.set_source_rgb(*character.color)
-        ctx.set_line_width(limb_width)
-        ctx.move_to(*pa)
-        ctx.line_to(*pb)
-        ctx.stroke()
+    costume_def = costumes.get_costume(character.costume) if character.costume else None
+    if costume_def and "back" in costume_def:
+        costume_def["back"](ctx, screen_points, H, character)
+
+    _stroke_bones(ctx, screen_points, BACK_LEG_BONES, character.color, limb_width)
+    _stroke_bones(ctx, screen_points, BACK_ARM_BONES, character.color, limb_width)
+    _stroke_bones(ctx, screen_points, TORSO_BONES, character.color, limb_width)
+
+    if costume_def and "front" in costume_def:
+        costume_def["front"](ctx, screen_points, H, character)
+
+    _stroke_bones(ctx, screen_points, FRONT_LEG_BONES, character.color, limb_width)
+    _stroke_bones(ctx, screen_points, FRONT_ARM_BONES, character.color, limb_width)
 
     # Round joints hide the seams between bone segments.
     joint_names = {n for pair in BONES for n in pair}
     for name in joint_names:
         if name in ("toe_l", "toe_r"):
             continue
-        x, y = to_screen(points[name])
+        x, y = screen_points[name]
         ctx.set_source_rgb(*character.color)
         ctx.arc(x, y, joint_radius, 0, 2 * math.pi)
         ctx.fill()
 
     # Head: neutral skin-tone circle with a colored outline.
-    head_x, head_y = to_screen(points["head"])
+    head_x, head_y = screen_points["head"]
     head_r = PROPORTIONS["head_radius"] * H
     ctx.set_source_rgb(0.98, 0.90, 0.76)
     ctx.arc(head_x, head_y, head_r, 0, 2 * math.pi)
@@ -241,3 +258,31 @@ def draw_stickman(ctx, character, pose: Pose):
 
     expressions.draw_face(ctx, (head_x, head_y), head_r, character.facing,
                             character.expression)
+
+    for prop_name in character.props:
+        if props.is_head_prop(prop_name):
+            drawer = props.get_prop_drawer(prop_name)
+            drawer(ctx, head_x, head_y, H, side, None)
+    for prop_name in character.props:
+        if props.is_hand_prop(prop_name):
+            hand = props.DEFAULT_HAND.get(prop_name, "r")
+            hx, hy = screen_points[f"hand_{hand}"]
+            hand_side = side if hand == "r" else -side
+            drawer = props.get_prop_drawer(prop_name)
+            drawer(ctx, hx, hy, H, hand_side, None)
+
+    if character.label:
+        ctx.select_font_face("DejaVu Sans", 0, 1)
+        label_size = H * 0.075
+        ctx.set_font_size(label_size)
+        ext = ctx.text_extents(character.label)
+        lx = head_x - ext.width / 2
+        ly = head_y - head_r - label_size * 0.7
+        ctx.set_source_rgb(1, 1, 1)
+        ctx.move_to(lx, ly)
+        ctx.text_path(character.label)
+        ctx.set_line_width(label_size * 0.18)
+        ctx.set_line_join(1)
+        ctx.stroke_preserve()
+        ctx.set_source_rgb(0.15, 0.13, 0.12)
+        ctx.fill()
