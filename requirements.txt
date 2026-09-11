@@ -1,0 +1,2 @@
+pycairo>=1.25
+PyYAML>=6.0
