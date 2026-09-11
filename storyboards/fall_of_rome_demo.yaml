@@ -1,0 +1,180 @@
+# Demo storyboard: The Fall of Rome, in about 30 seconds.
+# Run it with:  python render.py storyboards/fall_of_rome_demo.yaml
+# See FORMAT.md for a full explanation of everything used here.
+
+fps: 30
+resolution: [1080, 1920]
+
+characters:
+  augustus:
+    color: "#C9A227"
+    label: Augustus
+  senator:
+    color: "#6B3FA0"
+    label: Senator
+  general1:
+    color: "#2E5AA8"
+    label: General
+  general2:
+    color: "#8A2E2E"
+    label: Rival
+  hun:
+    color: "#4A4A4A"
+    label: Huns
+  goth1:
+    color: "#3E6B2E"
+    label: Goths
+  goth2:
+    color: "#3E6B2E"
+  alaric:
+    color: "#3E6B2E"
+    label: Alaric
+  citizen:
+    color: "#C97A3D"
+    label: Citizen
+  odoacer:
+    color: "#556B2F"
+    label: Odoacer
+  romulus:
+    color: "#C9A227"
+    label: Romulus
+  emperor_east:
+    color: "#9B5FB0"
+    label: Constantinople
+
+scenes:
+  # 1. Rome at its peak
+  - duration: 5
+    background: rome_city
+    transition_out: fade
+    camera:
+      - {t: 0, x: 50, y: 52, zoom: 1.08}
+      - {t: 5, x: 50, y: 50, zoom: 1.0}
+    text:
+      - {type: title, text: "The Fall of Rome", t: 0, duration: 2.2}
+      - {type: date_stamp, text: "27 BC", t: 2.4}
+      - {type: caption, text: "At its height, Rome rules the Mediterranean world.", t: 2.6}
+    characters:
+      augustus:
+        start: {x: 50, y: 80, facing: right, pose: stand, costume: toga, props: [laurel_wreath]}
+        actions:
+          - {t: 0.6, type: pose, pose: cheer, duration: 0.6}
+          - {t: 2.0, type: expression, expression: happy}
+      senator:
+        start: {x: 28, y: 82, facing: right, pose: bow, costume: toga}
+      general1:
+        start: {x: 72, y: 82, facing: left, pose: stand, props: [roman_helmet, rect_shield]}
+
+  # 2. Weak emperors, civil wars
+  - duration: 5
+    background: throne_room
+    transition_in: fade
+    transition_out: fade
+    camera:
+      - {t: 0, x: 50, y: 50, zoom: 1.0}
+      - {t: 5, x: 46, y: 50, zoom: 1.18}
+    text:
+      - {type: date_stamp, text: "235-284 AD", t: 0.3}
+      - {type: caption, text: "Weak emperors rise and fall. Generals fight generals.", t: 0.6}
+    effects:
+      - {type: dust_cloud, x: 50, y: 82, t: 1.4, duration: 2.5, scale: 1.6}
+    characters:
+      general1:
+        start: {x: 34, y: 82, facing: right, pose: stand, props: [roman_helmet, sword]}
+        actions:
+          - {t: 0.8, type: pose, pose: sword_swing, duration: 0.5}
+          - {t: 1.4, type: expression, expression: angry}
+      general2:
+        start: {x: 66, y: 82, facing: left, pose: block, props: [roman_helmet, rect_shield]}
+        actions:
+          - {t: 0.8, type: expression, expression: shocked}
+          - {t: 2.2, type: fall_down, duration: 0.6}
+
+  # 3. The Huns push the Goths across the Danube
+  - duration: 5
+    background: map
+    transition_in: fade
+    transition_out: fade
+    text:
+      - {type: date_stamp, text: "376 AD", t: 0.3}
+      - {type: caption, text: "The Huns sweep in from the east, pushing the Goths toward Rome.", t: 0.6}
+    map_labels:
+      - {text: "HUNS", x: 78, y: 38}
+      - {text: "GOTHS", x: 55, y: 45}
+      - {text: "ROME", x: 30, y: 62}
+      - {text: "DANUBE", x: 50, y: 55}
+    map_arrows:
+      - {from_x: 76, from_y: 42, to_x: 54, to_y: 50, t: 0.5, duration: 1.4}
+      - {from_x: 52, from_y: 52, to_x: 32, to_y: 60, t: 2.2, duration: 1.4}
+    effects:
+      - {type: dust_cloud, x: 72, y: 40, t: 0.2, duration: 3.5, scale: 1.3}
+
+  # 4. The Visigoths sack Rome, 410 AD
+  - duration: 6
+    background: rome_city
+    transition_in: fade
+    transition_out: fade
+    camera:
+      - {t: 0, x: 50, y: 55, zoom: 1.0}
+      - {t: 3, x: 50, y: 52, zoom: 1.12, shake: 0.25}
+      - {t: 6, x: 50, y: 50, zoom: 1.2, shake: 0.4}
+    text:
+      - {type: date_stamp, text: "410 AD", t: 0.2}
+      - {type: caption, text: "The Visigoths, led by Alaric, storm the city.", t: 0.5}
+      - {type: caption, text: "Rome falls for the first time in 800 years.", t: 3.6}
+    effects:
+      - {type: crumbling_building, x: 78, y: 78, t: 1.2, duration: 3.2, width_pct: 30, height_pct: 30}
+      - {type: fire, x: 82, y: 82, t: 3.8, duration: 2.2, scale: 1.2}
+      - {type: smoke, x: 82, y: 80, t: 3.8, duration: 2.2, scale: 1.4}
+    characters:
+      alaric:
+        start: {x: -10, y: 84, facing: right, pose: stand, props: [barbarian_helmet, sword]}
+        actions:
+          - {t: 0, type: enter, side: left, x: 32, duration: 1.4}
+          - {t: 1.6, type: pose, pose: sword_swing, duration: 0.4}
+          - {t: 2.2, type: expression, expression: angry}
+      citizen:
+        start: {x: 60, y: 83, facing: left, pose: stand, expression: scared}
+        actions:
+          - {t: 0.4, type: expression, expression: shocked}
+          - {t: 1.0, type: pose, pose: facepalm, duration: 0.5}
+          - {t: 2.4, type: exit, side: right, duration: 1.6}
+
+  # 5. Odoacer deposes Romulus Augustulus, 476 AD
+  - duration: 6
+    background: throne_room
+    transition_in: fade
+    transition_out: fade
+    camera:
+      - {t: 0, x: 50, y: 50, zoom: 1.05}
+      - {t: 6, x: 50, y: 48, zoom: 1.22}
+    text:
+      - {type: date_stamp, text: "476 AD", t: 0.2}
+      - {type: caption, text: "Odoacer deposes the last Western emperor, Romulus Augustulus.", t: 0.6}
+      - {type: caption, text: "The Western Roman Empire is no more.", t: 4.2}
+    characters:
+      romulus:
+        start: {x: 46, y: 82, facing: right, pose: kneel, costume: toga, expression: sad}
+        actions:
+          - {t: 3.0, type: drop, prop: laurel_wreath}
+      odoacer:
+        start: {x: -10, y: 82, facing: right, pose: stand, props: [barbarian_helmet, spear]}
+        actions:
+          - {t: 0, type: enter, side: left, x: 66, duration: 1.6}
+          - {t: 1.8, type: expression, expression: angry}
+          - {t: 2.6, type: pose, pose: point, duration: 0.5}
+          - {t: 3.0, type: pickup, prop: crown}
+
+  # 6. Closing beat: the Eastern Empire lives on
+  - duration: 4.5
+    background: map
+    transition_in: fade
+    text:
+      - {type: caption, text: "But in the east, the Roman Empire endures for another 977 years...", t: 0.3}
+      - {type: date_stamp, text: "1453 AD", t: 2.6}
+    characters:
+      emperor_east:
+        start: {x: 50, y: 80, facing: right, pose: stand, costume: toga, props: [crown]}
+        actions:
+          - {t: 0.5, type: pose, pose: wave, duration: 0.5}
+          - {t: 1.5, type: expression, expression: happy}

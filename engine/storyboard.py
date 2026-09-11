@@ -175,6 +175,27 @@ def _validate_scene(scene_raw, where, known_characters):
             "duration": float(td["duration"]) if "duration" in td else None,
         })
 
+    map_labels = []
+    for j, ld in enumerate(scene_raw.get("map_labels", []) or []):
+        lwhere = f"{where}, map label {j + 1}"
+        map_labels.append({
+            "text": str(_require(ld, "text", lwhere)),
+            "x": float(_require(ld, "x", lwhere, "x position, 0-100")),
+            "y": float(_require(ld, "y", lwhere, "y position, 0-100")),
+        })
+
+    map_arrows = []
+    for j, ad in enumerate(scene_raw.get("map_arrows", []) or []):
+        awhere = f"{where}, map arrow {j + 1}"
+        map_arrows.append({
+            "from_x": float(_require(ad, "from_x", awhere)),
+            "from_y": float(_require(ad, "from_y", awhere)),
+            "to_x": float(_require(ad, "to_x", awhere)),
+            "to_y": float(_require(ad, "to_y", awhere)),
+            "t": float(ad.get("t", 0.0)),
+            "duration": float(ad.get("duration", 1.5)),
+        })
+
     effects = []
     for j, ed in enumerate(scene_raw.get("effects", []) or []):
         ewhere = f"{where}, effect {j + 1}"
@@ -209,6 +230,8 @@ def _validate_scene(scene_raw, where, known_characters):
         "camera": camera,
         "text": texts,
         "effects": effects,
+        "map_labels": map_labels,
+        "map_arrows": map_arrows,
         "characters": characters,
     }
 

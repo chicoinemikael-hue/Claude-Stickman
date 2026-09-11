@@ -69,6 +69,18 @@ class SceneRenderer:
         else:
             background.draw_preset(ctx, w, h, bg)
 
+    def _draw_map_annotations(self, ctx, w, h, t):
+        for label in self.scene["map_labels"]:
+            map_scene.draw_map_label(ctx, w, h, label["x"], label["y"], label["text"])
+        for arrow in self.scene["map_arrows"]:
+            if t < arrow["t"]:
+                continue
+            progress = min((t - arrow["t"]) / arrow["duration"], 1.0) if arrow["duration"] > 0 else 1.0
+            map_scene.draw_map_arrow(
+                ctx, w, h, (arrow["from_x"], arrow["from_y"]), (arrow["to_x"], arrow["to_y"]),
+                progress=progress,
+            )
+
     def _draw_effects(self, ctx, w, h, t):
         for effect in self.scene["effects"]:
             if not (effect["t"] <= t <= effect["t"] + effect["duration"]):
@@ -122,9 +134,16 @@ class SceneRenderer:
                 text.draw_speech_bubble(ctx, w, h, speech, character.x_px, head_y)
 
     def _draw_text(self, ctx, w, h, t):
+        captions = [item for item in self.scene["text"] if item["type"] == "caption"]
         for item in self.scene["text"]:
             duration = item["duration"]
-            end_t = item["t"] + duration if duration is not None else self.scene["duration"]
+            if duration is not None:
+                end_t = item["t"] + duration
+            elif item["type"] == "caption":
+                later = [c["t"] for c in captions if c["t"] > item["t"]]
+                end_t = min(later) if later else self.scene["duration"]
+            else:
+                end_t = self.scene["duration"]
             if not (item["t"] <= t <= end_t):
                 continue
             if item["type"] == "title":
@@ -150,6 +169,7 @@ class SceneRenderer:
         cam = self.camera_at(t)
         with camera_view(ctx, cam, w, h, t):
             self._draw_background(ctx, w, h)
+            self._draw_map_annotations(ctx, w, h, t)
             self._draw_effects(ctx, w, h, t)
             self._draw_characters(ctx, w, h, t)
 

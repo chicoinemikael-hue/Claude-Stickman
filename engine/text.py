@@ -75,10 +75,18 @@ def draw_title(ctx, w, h, text, y_pct=20.0, size_pct=7.0,
 
 def draw_date_stamp(ctx, w, h, text, x_pct=50.0, y_pct=35.0, size_pct=4.5,
                      color=(1.0, 1.0, 1.0), bg_color=(0.15, 0.13, 0.12, 0.75)):
-    """A small badge like "476 AD"."""
+    """A small badge like "476 AD". Long text auto-shrinks to fit,
+    but a date stamp is meant to be a short label -- use a caption
+    for anything longer than a few words."""
     size = h * size_pct / 100.0
     _set_font(ctx, size)
     ext = ctx.text_extents(text)
+
+    max_text_width = w * 0.80
+    if ext.width > max_text_width:
+        size *= max_text_width / ext.width
+        _set_font(ctx, size)
+        ext = ctx.text_extents(text)
 
     cx = w * x_pct / 100.0
     cy = h * y_pct / 100.0
